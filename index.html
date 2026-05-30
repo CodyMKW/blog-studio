@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Studio Suite</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <style>
+        :root {
+            color-scheme: dark;
+            --primary: #4caf50;
+            --primary-hover: #81c784;
+            --primary-alpha: rgba(76, 175, 80, 0.15);
+            --bg: #0e0e0e;
+            --card-bg: #181818;
+            --input-bg: #222222;
+            --text: #e2e2e2;
+            --text-muted: #888888;
+            --border: #2a2a2a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ====== SUITE HEADER & TAB BAR ====== */
+        .suite-header {
+            background: #111111;
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+
+        .suite-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 0;
+            flex-shrink: 0;
+        }
+
+        .suite-brand .logo-mark {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .suite-brand .logo-mark svg {
+            width: 16px;
+            height: 16px;
+            fill: #000;
+        }
+
+        .suite-brand h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+        }
+
+        .suite-brand .version-tag {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            background: #252525;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-family: monospace;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 0;
+            padding: 0 20px;
+            height: 60px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+            position: relative;
+            box-shadow: none;
+            border-bottom: 2px solid transparent;
+            letter-spacing: 0.1px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: transparent;
+        }
+
+        .tab-btn:active {
+            transform: none;
+        }
+
+        .tab-btn .tab-icon {
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        /* ====== TAB PANELS ====== */
+        .tab-panel {
+            display: none;
+            padding: 24px 24px 40px;
+            animation: fadeIn 0.18s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ====== SHARED LAYOUT PRIMITIVES ====== */
+        .panel-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            gap: 24px;
+        }
+
+        .panel-grid-2col {
+            grid-template-columns: 1.1fr 0.9fr;
+        }
+
+        @media (max-width: 1100px) {
+            .panel-grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 16px;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group { margin-bottom: 14px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.83rem;
+            color: var(--text);
+        }
+
+        input[type="text"], input[type="date"], input[type="time"], select, textarea {
+            width: 100%;
+            padding: 10px 13px;
+            background-color: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.1);
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: #0a0a0a;
+            border: none;
+            padding: 11px 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+
+        button.btn-secondary {
+            background-color: #202020;
+            color: var(--primary);
+            border: 1px solid #333;
+        }
+        button.btn-secondary:hover {
+            background-color: #2a2a2a;
+            border-color: var(--primary);
+        }
+
+        button.btn-alt {
+            background-color: #202020;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        button.btn-alt:hover { background-color: #2a2a2a; border-color: var(--text-muted); }
+
+        /* ====== EASYMDE DARK THEME ====== */
+        .EasyMDEContainer .editor-toolbar {
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            border-color: var(--border);
+            background: #1e1e1e;
+        }
+        .EasyMDEContainer .editor-toolbar button { color: var(--text) !important; }
+        .EasyMDEContainer .editor-toolbar button.active,
+        .EasyMDEContainer .editor-toolbar button:hover {
+            background: #2e2e2e;
+            border-color: #3a3a3a;
+            color: var(--primary) !important;
+        }
+        .EasyMDEContainer .editor-toolbar i.separator {
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+        .EasyMDEContainer .CodeMirror {
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            border-color: var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 0.92rem;
+        }
+        .EasyMDEContainer .CodeMirror-cursor { border-left: 1.5px solid var(--text) !important; }
+        .EasyMDEContainer .CodeMirror-selected { background: #3a3a3a !important; }
+
+        /* ====== TAB 1: BLOG POST CREATOR — PREVIEW ====== */
+        .preview-window {
+            border: 1px dashed #2f4f30;
+            background: #111a11;
+            padding: 25px;
+            border-radius: 8px;
+            min-height: 500px;
+            overflow-y: auto;
+        }
+
+        .blog-post h3 {
+            font-size: 1.7rem;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .post-meta {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .post-content { margin-bottom: 20px; color: #e0e0e0; }
+        .post-content h1, .post-content h2, .post-content h3, .post-content h4 {
+            color: #fff;
+            margin: 14px 0 8px;
+        }
+        .post-content blockquote {
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            color: var(--text-muted);
+            font-style: italic;
+            margin: 10px 0;
+        }
+        .post-content ul, .post-content ol { margin-left: 20px; margin-bottom: 10px; }
+        .post-content img, .preview-window img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 15px auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+        .preview-window iframe {
+            width: 100%;
+            height: 315px;
+            max-width: 560px;
+            margin: 15px auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .blog-review-rating {
+            background: #1e1e1e;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 20px;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .blog-review-rating h4 { margin-bottom: 5px; color: #fff; }
+
+        .instructions-box {
+            margin-top: 20px;
+            background: #111d12;
+            border-left: 3px solid var(--primary);
+            padding: 14px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+        }
+
+        .instructions-box pre {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            margin-top: 5px;
+            font-family: monospace;
+            font-size: 0.78rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            color: #a9dfbf;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .instructions-box ol { margin-left: 18px; margin-top: 5px; }
+
+        /* ====== TAB 2: INJECTOR ====== */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 36px 20px;
+            text-align: center;
+            background: var(--input-bg);
+            cursor: pointer;
+            margin-bottom: 18px;
+            transition: all 0.25s ease;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(76, 175, 80, 0.03);
+            box-shadow: inset 0 0 16px var(--primary-alpha);
+        }
+
+        .drop-icon { font-size: 1.8rem; margin-bottom: 6px; display: block; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-val { font-size: 1.2rem; font-weight: 700; color: #fff; font-family: monospace; }
+        .stat-label { font-size: 0.72rem; color: var(--text-muted); }
+
+        .meta-badge {
+            background: #252525;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .meta-badge.active {
+            color: var(--primary);
+            border-color: var(--primary-alpha);
+            background: var(--primary-alpha);
+        }
+
+        .output-textarea {
+            width: 100%;
+            min-height: 460px;
+            padding: 16px;
+            background: #090909;
+            color: #a9dfbf;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.88rem;
+            line-height: 1.55;
+            resize: vertical;
+            outline: none;
+        }
+
+        .action-row-2 {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2e7d32;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+         SUITE HEADER + TAB SWITCHER
+    ============================================================ -->
+    <div class="suite-header">
+        <div class="suite-brand">
+            <div class="logo-mark">
+                <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/>
+                </svg>
+            </div>
+            <h1>Blog Studio Suite</h1>
+            <span class="version-tag">v3.0</span>
+        </div>
+
+        <nav class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('creator', this)">
+                <span class="tab-icon">✍️</span>
+                Post Creator &amp; Editor
+            </button>
+            <button class="tab-btn" onclick="switchTab('injector', this)">
+                <span class="tab-icon">⚙️</span>
+                Frontmatter Injector
+            </button>
+        </nav>
+    </div>
+
+    <!-- ============================================================
+         TAB 1: BLOG POST CREATOR
+    ============================================================ -->
+    <div id="tab-creator" class="tab-panel active">
+        <div class="panel-grid panel-grid-2col">
+
+            <!-- LEFT: Controls -->
+            <div class="panel">
+                <div class="panel-title">Metadata / Frontmatter</div>
+
+                <div class="form-group">
+                    <label for="c-title">Post Title</label>
+                    <input type="text" id="c-title" placeholder="Welcome to my Blog!" oninput="updatePreview()">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="c-date">Date</label>
+                        <input type="date" id="c-date" onchange="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label for="c-time">Time</label>
+                        <input type="time" id="c-time" onchange="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="c-author">Author</label>
+                        <input type="text" id="c-author" value="CodyMKW" oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label for="c-category">Category</label>
+                        <input type="text" id="c-category" placeholder="Page News/Updates" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="c-image">Header Image URL (Optional)</label>
+                        <input type="text" id="c-image" placeholder="https://i.imgur.com/example.gif" oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label for="c-video">Video Embed URL (Optional)</label>
+                        <input type="text" id="c-video" placeholder="https://www.youtube.com/embed/..." oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="c-rating">Review Rating (Optional, 1–5 or custom text)</label>
+                    <input type="text" id="c-rating" placeholder="4.5" oninput="updatePreview()">
+                </div>
+
+                <div class="panel-title" style="margin-top: 22px;">Content</div>
+
+                <div class="form-group">
+                    <label for="c-content">Primary Content (Markdown Editor 1)</label>
+                    <textarea id="c-content" placeholder="Write your main post text here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="c-content2">Content 2 — Below Video (Optional)</label>
+                    <textarea id="c-content2" placeholder="Optional secondary content block..."></textarea>
+                </div>
+
+                <div class="actions">
+                    <button type="button" onclick="downloadCreatorMd()">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                        Download .md File
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('c-import-file').click()">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3-3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+                        Load Existing .md Post
+                    </button>
+                    <input type="file" id="c-import-file" accept=".md" onchange="handleCreatorImport(event)" style="display: none;">
+                </div>
+            </div>
+
+            <!-- RIGHT: Preview -->
+            <div style="position: sticky; top: 62px; align-self: start;">
+                <div class="panel">
+                    <div class="panel-title">Live Preview</div>
+                    <div class="preview-window">
+                        <div class="blog-post">
+                            <h3 id="prev-title">Post Title Template</h3>
+                            <p class="post-meta" id="prev-meta">Date • Time • Author • Category</p>
+                            <div id="prev-image-wrap" style="text-align:center; display:none;">
+                                <img id="prev-image" src="" alt="Post Image">
+                            </div>
+                            <div class="post-content" id="prev-content"></div>
+                            <div id="prev-video-wrap" style="text-align:center; display:none;">
+                                <iframe id="prev-video" src="" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                            <div class="post-content" id="prev-content2"></div>
+                            <div id="prev-rating-wrap"></div>
+                        </div>
+                    </div>
+                    <div class="instructions-box">
+                        <strong>Deployment:</strong>
+                        <ol>
+                            <li>Download your <code>.md</code> file.</li>
+                            <li>Place it in your server's <code>posts/</code> directory.</li>
+                            <li>Prepend the filename to <code>posts/index.json</code>:
+                                <pre>{
+  "posts": [
+    "your-new-filename.md",
+    "welcome-to-my-blog.md"
+  ]
+}</pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TAB 2: FRONTMATTER INJECTOR
+    ============================================================ -->
+    <div id="tab-injector" class="tab-panel">
+        <div class="panel-grid panel-grid-2col">
+
+            <!-- LEFT: Controls -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>1. Upload Source Document</span>
+                    <span class="meta-badge" id="inj-status-badge">Empty</span>
+                </div>
+
+                <div class="drop-zone" id="inj-drop-zone" onclick="document.getElementById('inj-file-input').click()">
+                    <span class="drop-icon">📂</span>
+                    <span id="inj-drop-text">Drag &amp; Drop any <code>.md</code> file here, or click to browse</span>
+                    <input type="file" id="inj-file-input" accept=".md" onchange="injHandleFileSelect(event)" style="display: none;">
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-val" id="inj-stat-words">0</div><div class="stat-label">Words</div></div>
+                    <div class="stat-card"><div class="stat-val" id="inj-stat-lines">0</div><div class="stat-label">Lines</div></div>
+                    <div class="stat-card"><div class="stat-val" id="inj-stat-chars">0</div><div class="stat-label">Characters</div></div>
+                </div>
+
+                <div class="panel-title">2. Tune Metadata Values</div>
+
+                <div class="form-group">
+                    <label for="inj-title">Post Title</label>
+                    <input type="text" id="inj-title" placeholder="Give your document a title..." oninput="injRegenerateOutput()">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inj-date">Publish Date</label>
+                        <input type="date" id="inj-date" onchange="injRegenerateOutput()">
+                    </div>
+                    <div class="form-group">
+                        <label for="inj-time">Publish Time</label>
+                        <input type="time" id="inj-time" onchange="injRegenerateOutput()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inj-author">Author Handle</label>
+                        <input type="text" id="inj-author" value="CodyMKW" oninput="injRegenerateOutput()">
+                    </div>
+                    <div class="form-group">
+                        <label for="inj-category">Category</label>
+                        <input type="text" id="inj-category" placeholder="e.g., Page News/Updates" oninput="injRegenerateOutput()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="inj-image">Header Image URL (Optional)</label>
+                        <input type="text" id="inj-image" placeholder="https://..." oninput="injRegenerateOutput()">
+                    </div>
+                    <div class="form-group">
+                        <label for="inj-rating">Review Rating (Optional)</label>
+                        <input type="text" id="inj-rating" placeholder="e.g., 4.5" oninput="injRegenerateOutput()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Output -->
+            <div class="panel" style="display: flex; flex-direction: column;">
+                <div class="panel-title">3. Studio-Ready Output</div>
+                <textarea class="output-textarea" id="inj-output-preview" readonly placeholder="Your standardized Markdown output will appear here..."></textarea>
+                <div class="action-row-2">
+                    <button type="button" onclick="injDownload()">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                        Download Standardized File
+                    </button>
+                    <button type="button" class="btn-alt" onclick="injCopy()">Copy Snippet</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast-notify">Copied!</div>
+
+    <!-- ============================================================
+         SCRIPTS
+    ============================================================ -->
+    <script>
+    // ========================
+    // TAB SWITCHING
+    // ========================
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+
+        // Refresh EasyMDE instances on tab show (avoids CodeMirror sizing bugs)
+        if (tabId === 'creator') {
+            if (window.easyMDE) window.easyMDE.codemirror.refresh();
+            if (window.easyMDE2) window.easyMDE2.codemirror.refresh();
+        }
+    }
+
+    // ========================
+    // INIT DATE/TIME DEFAULTS
+    // ========================
+    (function setDefaults() {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+        const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        document.getElementById('c-date').value = dateStr;
+        document.getElementById('c-time').value = timeStr;
+    })();
+
+    // ========================
+    // TAB 1 — CREATOR LOGIC
+    // ========================
+    let easyMDE, easyMDE2;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        easyMDE = new EasyMDE({
+            element: document.getElementById('c-content'),
+            spellChecker: false,
+            placeholder: "Write your main content here...",
+            status: false,
+            maxHeight: "280px",
+            toolbar: ["bold","italic","heading","|","quote","unordered-list","ordered-list","|","link","image","|","guide"]
+        });
+        easyMDE2 = new EasyMDE({
+            element: document.getElementById('c-content2'),
+            spellChecker: false,
+            placeholder: "Optional secondary content block...",
+            status: false,
+            maxHeight: "180px",
+            toolbar: ["bold","italic","heading","|","quote","unordered-list","ordered-list","|","link","image","|","guide"]
+        });
+        easyMDE.codemirror.on("change", updatePreview);
+        easyMDE2.codemirror.on("change", updatePreview);
+        updatePreview();
+    });
+
+    function cGetFormattedDate(prefix) {
+        const v = document.getElementById(prefix + '-date').value;
+        if (!v) return '';
+        const [y, m, d] = v.split('-');
+        return `${parseInt(m,10)}/${parseInt(d,10)}/${y}`;
+    }
+
+    function cGetFormattedTime(prefix) {
+        const v = document.getElementById(prefix + '-time').value;
+        if (!v) return '';
+        let [h, m] = v.split(':');
+        h = parseInt(h, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${m} ${ampm}`;
+    }
+
+    function runRatingEngine(ratingValue) {
+        if (!ratingValue) return '';
+        const num = parseFloat(ratingValue);
+        let displayContent = '';
+        if (!isNaN(num) && num <= 5) {
+            const full = Math.floor(num);
+            const empty = 5 - full;
+            let stars = '★'.repeat(full) + '☆'.repeat(empty);
+            const verdicts = [[5,'Masterpiece'],[4.5,'Outstanding'],[4,'Excellent'],[3.5,'Great'],[3,'Good'],[2.5,'Average'],[2,'Below Average'],[1,'Poor'],[0,'Avoid']];
+            const verdict = (verdicts.find(([t]) => num >= t) || ['','—'])[1];
+            displayContent = `<div style="font-size:2em;color:#FFD700;text-shadow:1px 1px 3px rgba(0,0,0,0.5)">${stars}</div>
+                <div style="font-size:0.9em;color:#aaa;margin-top:5px">${ratingValue} / 5</div>
+                <div style="font-size:1em;font-weight:bold;margin-top:6px;color:#fff">${verdict}</div>`;
+        } else {
+            displayContent = `<div style="font-size:1.5em;font-weight:bold;color:#81c784">${ratingValue}</div>`;
+        }
+        return `<div class="blog-review-rating"><h4>Review Score</h4>${displayContent}</div>`;
+    }
+
+    function updatePreview() {
+        const title    = document.getElementById('c-title').value || 'Post Title Template';
+        const date     = cGetFormattedDate('c') || 'Date';
+        const time     = cGetFormattedTime('c') || 'Time';
+        const author   = document.getElementById('c-author').value || 'Author';
+        const category = document.getElementById('c-category').value || 'Category';
+        const image    = document.getElementById('c-image').value;
+        const video    = document.getElementById('c-video').value;
+        const rating   = document.getElementById('c-rating').value;
+        const content  = easyMDE ? easyMDE.value() : '';
+        const content2 = easyMDE2 ? easyMDE2.value() : '';
+
+        document.getElementById('prev-title').innerText = title;
+        document.getElementById('prev-meta').innerText = `${date} • ${time} • ${author} • ${category}`;
+
+        const imgWrap = document.getElementById('prev-image-wrap');
+        if (image) { document.getElementById('prev-image').src = image; imgWrap.style.display = 'block'; }
+        else imgWrap.style.display = 'none';
+
+        document.getElementById('prev-content').innerHTML = marked.parse(content || '*No main content yet.*');
+
+        const vidWrap = document.getElementById('prev-video-wrap');
+        if (video) { document.getElementById('prev-video').src = video; vidWrap.style.display = 'block'; }
+        else vidWrap.style.display = 'none';
+
+        document.getElementById('prev-content2').innerHTML = content2 ? marked.parse(content2) : '';
+        document.getElementById('prev-rating-wrap').innerHTML = runRatingEngine(rating);
+    }
+
+    function handleCreatorImport(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const text = evt.target.result;
+            const parts = text.split(/---\s*\r?\n/);
+            if (parts.length < 3) { alert("Parsing Error: Could not find clean frontmatter."); return; }
+
+            const fmText = parts[1];
+            const body   = parts.slice(2).join('---\n').trim();
+            const lines  = fmText.split(/\r?\n/);
+            let meta = {};
+            let parsingC2 = false, c2Lines = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (parsingC2) {
+                    if (line.startsWith('  ') || line.trim() === '') { c2Lines.push(line.substring(2)); continue; }
+                    else parsingC2 = false;
+                }
+                if (line.trim().startsWith('content2:')) { parsingC2 = true; continue; }
+                const m = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+                if (m) meta[m[1]] = m[2].trim();
+            }
+
+            const c2 = c2Lines.join('\n').trim();
+
+            document.getElementById('c-title').value    = meta.title    || '';
+            document.getElementById('c-author').value   = meta.author   || 'CodyMKW';
+            document.getElementById('c-category').value = meta.category || '';
+            document.getElementById('c-image').value    = meta.image    || '';
+            document.getElementById('c-video').value    = meta.video    || '';
+            document.getElementById('c-rating').value   = meta.rating   || '';
+
+            if (meta.date) {
+                const dp = meta.date.trim().split('/');
+                if (dp.length === 3) document.getElementById('c-date').value = `${dp[2]}-${dp[0].padStart(2,'0')}-${dp[1].padStart(2,'0')}`;
+            }
+            if (meta.time) {
+                const tm = meta.time.trim().match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+                if (tm) {
+                    let h = parseInt(tm[1],10);
+                    const mins = tm[2].padStart(2,'0');
+                    if (tm[3].toUpperCase() === 'PM' && h < 12) h += 12;
+                    if (tm[3].toUpperCase() === 'AM' && h === 12) h = 0;
+                    document.getElementById('c-time').value = `${String(h).padStart(2,'0')}:${mins}`;
+                }
+            }
+            if (easyMDE) easyMDE.value(body);
+            if (easyMDE2) easyMDE2.value(c2);
+            updatePreview();
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    }
+
+    function downloadCreatorMd() {
+        const title    = document.getElementById('c-title').value || 'Untitled Post';
+        const date     = cGetFormattedDate('c');
+        const time     = cGetFormattedTime('c');
+        const author   = document.getElementById('c-author').value;
+        const category = document.getElementById('c-category').value;
+        const image    = document.getElementById('c-image').value;
+        const video    = document.getElementById('c-video').value;
+        const rating   = document.getElementById('c-rating').value;
+        const content  = easyMDE ? easyMDE.value() : '';
+        const content2 = easyMDE2 ? easyMDE2.value() : '';
+
+        let md = '---\n';
+        md += `title: ${title}\n`;
+        md += `date: ${date}\n`;
+        md += `time: ${time}\n`;
+        md += `author: ${author}\n`;
+        md += `category: ${category}\n`;
+        if (image) md += `image: ${image}\n`;
+        if (video) md += `video: ${video}\n`;
+        if (rating) md += `rating: ${rating}\n`;
+        if (content2) { md += `content2: |\n`; md += content2.split('\n').map(l => '  ' + l).join('\n') + '\n'; }
+        md += '---\n\n';
+        md += content;
+
+        triggerDownload(md, slugify(title) + '.md');
+    }
+
+    // ========================
+    // TAB 2 — INJECTOR LOGIC
+    // ========================
+    let injRawBody = "";
+
+    const injDrop = document.getElementById('inj-drop-zone');
+    ['dragenter','dragover'].forEach(ev => injDrop.addEventListener(ev, e => { e.preventDefault(); injDrop.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(ev => injDrop.addEventListener(ev, e => { e.preventDefault(); injDrop.classList.remove('dragover'); }));
+    injDrop.addEventListener('drop', e => { const f = e.dataTransfer.files; if (f.length) injProcess(f[0]); });
+
+    function injHandleFileSelect(e) {
+        const f = e.target.files;
+        if (f.length) injProcess(f[0]);
+    }
+
+    function injProcess(file) {
+        document.getElementById('inj-drop-text').innerHTML = `Active: <code>${file.name}</code>`;
+        const ft = new Date(file.lastModified);
+        const pad = n => String(n).padStart(2,'0');
+        document.getElementById('inj-date').value = `${ft.getFullYear()}-${pad(ft.getMonth()+1)}-${pad(ft.getDate())}`;
+        document.getElementById('inj-time').value = `${pad(ft.getHours())}:${pad(ft.getMinutes())}`;
+
+        const reader = new FileReader();
+        reader.onload = evt => injParse(evt.target.result, file.name);
+        reader.readAsText(file);
+    }
+
+    function injParse(text, filename) {
+        document.getElementById('inj-stat-words').innerText = text.trim() ? text.trim().split(/\s+/).length : 0;
+        document.getElementById('inj-stat-lines').innerText = text.split(/\r?\n/).length;
+        document.getElementById('inj-stat-chars').innerText = text.length;
+
+        const parts = text.split(/---\s*\r?\n/);
+        let meta = {};
+        const badge = document.getElementById('inj-status-badge');
+
+        if (text.startsWith('---') && parts.length >= 3) {
+            badge.innerText = "Frontmatter Detected";
+            badge.classList.add('active');
+            injRawBody = parts.slice(2).join('---\n').trim();
+            parts[1].split(/\r?\n/).forEach(line => {
+                const m = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+                if (m) meta[m[1]] = m[2].trim();
+            });
+        } else {
+            badge.innerText = "Injected Clean";
+            badge.classList.remove('active');
+            injRawBody = text.trim();
+            const th = injRawBody.match(/^#\s+(.*)$/m);
+            if (th) { meta.title = th[1].trim(); injRawBody = injRawBody.replace(/^#\s+.*$/m,'').trim(); }
+            else meta.title = filename.replace(/\.[^/.]+$/,'').replace(/[-_]+/g,' ');
+        }
+
+        document.getElementById('inj-title').value    = meta.title    || '';
+        document.getElementById('inj-author').value   = meta.author   || 'CodyMKW';
+        document.getElementById('inj-category').value = meta.category || '';
+        document.getElementById('inj-image').value    = meta.image    || '';
+        document.getElementById('inj-rating').value   = meta.rating   || '';
+
+        if (meta.date) {
+            const dp = meta.date.split('/');
+            if (dp.length === 3) document.getElementById('inj-date').value = `${dp[2]}-${dp[0].padStart(2,'0')}-${dp[1].padStart(2,'0')}`;
+        }
+        if (meta.time) {
+            const tm = meta.time.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+            if (tm) {
+                let h = parseInt(tm[1],10);
+                const mins = tm[2].padStart(2,'0');
+                if (tm[3].toUpperCase() === 'PM' && h < 12) h += 12;
+                if (tm[3].toUpperCase() === 'AM' && h === 12) h = 0;
+                document.getElementById('inj-time').value = `${String(h).padStart(2,'0')}:${mins}`;
+            }
+        }
+        injRegenerateOutput();
+    }
+
+    function injRegenerateOutput() {
+        const title    = document.getElementById('inj-title').value    || 'Untitled Post';
+        const date     = cGetFormattedDate('inj');
+        const time     = cGetFormattedTime('inj');
+        const author   = document.getElementById('inj-author').value;
+        const category = document.getElementById('inj-category').value;
+        const image    = document.getElementById('inj-image').value;
+        const rating   = document.getElementById('inj-rating').value;
+
+        let out = '---\n';
+        out += `title: ${title}\n`;
+        out += `date: ${date}\n`;
+        out += `time: ${time}\n`;
+        out += `author: ${author}\n`;
+        out += `category: ${category}\n`;
+        if (image) out += `image: ${image}\n`;
+        if (rating) out += `rating: ${rating}\n`;
+        out += '---\n\n';
+        out += injRawBody;
+
+        document.getElementById('inj-output-preview').value = out;
+    }
+
+    function injCopy() {
+        const ta = document.getElementById('inj-output-preview');
+        ta.select();
+        document.execCommand('copy');
+        showToast();
+    }
+
+    function injDownload() {
+        const out = document.getElementById('inj-output-preview').value;
+        if (!out) return;
+        const title = document.getElementById('inj-title').value || 'processed-draft';
+        triggerDownload(out, slugify(title) + '.md');
+    }
+
+    // ========================
+    // SHARED UTILS
+    // ========================
+    function slugify(str) {
+        return str.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-');
+    }
+
+    function triggerDownload(text, filename) {
+        const blob = new Blob([text], { type: 'text/markdown;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function showToast() {
+        const toast = document.getElementById('toast-notify');
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 1800);
+    }
+    </script>
+</body>
+</html>
