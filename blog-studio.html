@@ -472,6 +472,62 @@
             pointer-events: none;
             z-index: 999;
         }
+        /* ====== TAB 3: INDEX.JSON MANAGER ====== */
+        .idx-source-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .idx-source-btn {
+            background: #202020;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 9px 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: none;
+            display: block;
+            width: 100%;
+        }
+
+        .idx-source-btn:hover {
+            background: #2a2a2a;
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .idx-source-btn.active {
+            background: var(--primary-alpha);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .idx-info-box {
+            background: #111d12;
+            border: 1px solid #2a4a2a;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            color: #a9dfbf;
+            margin-top: 10px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            line-height: 1.6;
+        }
+
+        .idx-warn-box {
+            background: rgba(186, 117, 23, 0.1);
+            border: 1px solid rgba(186, 117, 23, 0.35);
+            border-radius: 6px;
+            padding: 9px 14px;
+            font-size: 0.83rem;
+            color: #e8a840;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -487,7 +543,7 @@
                 </svg>
             </div>
             <h1>Blog Studio Suite</h1>
-            <span class="version-tag">v3.0</span>
+            <span class="version-tag">v3.2</span>
         </div>
 
         <nav class="tab-bar">
@@ -498,6 +554,10 @@
             <button class="tab-btn" onclick="switchTab('injector', this)">
                 <span class="tab-icon">⚙️</span>
                 Frontmatter Injector
+            </button>
+            <button class="tab-btn" onclick="switchTab('slugtool', this)">
+                <span class="tab-icon">📋</span>
+                index.json Manager
             </button>
         </nav>
     </div>
@@ -680,9 +740,17 @@
                         <input type="text" id="inj-image" placeholder="https://..." oninput="injRegenerateOutput()">
                     </div>
                     <div class="form-group">
+                        <label for="inj-video">Video Embed URL (Optional)</label>
+                        <input type="text" id="inj-video" placeholder="https://www.youtube.com/embed/..." oninput="injRegenerateOutput()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="inj-rating">Review Rating (Optional)</label>
                         <input type="text" id="inj-rating" placeholder="e.g., 4.5" oninput="injRegenerateOutput()">
                     </div>
+                    <div class="form-group"></div>
                 </div>
             </div>
 
@@ -702,7 +770,83 @@
         </div>
     </div>
 
+    <!-- ============================================================
+         TAB 3: INDEX.JSON MANAGER
+    ============================================================ -->
+    <div id="tab-slugtool" class="tab-panel">
+        <div class="panel-grid panel-grid-2col">
+
+            <!-- LEFT: Upload + controls -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>1. Load index.json</span>
+                    <span class="meta-badge" id="idx-badge">No file loaded</span>
+                </div>
+
+                <div class="drop-zone" id="idx-drop-zone" onclick="document.getElementById('idx-file-input').click()">
+                    <span class="drop-icon">📋</span>
+                    <span id="idx-drop-text">Drag &amp; Drop your <code>index.json</code> here, or click to browse</span>
+                    <input type="file" id="idx-file-input" accept=".json" onchange="idxHandleFileSelect(event)" style="display:none;">
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-val" id="idx-stat-count">0</div><div class="stat-label">Posts</div></div>
+                    <div class="stat-card"><div class="stat-val" id="idx-stat-new">—</div><div class="stat-label">Adding</div></div>
+                    <div class="stat-card"><div class="stat-val" id="idx-stat-total">—</div><div class="stat-label">New Total</div></div>
+                </div>
+
+                <div class="panel-title">2. Post to Register</div>
+
+                <div class="idx-source-row">
+                    <button type="button" class="idx-source-btn active" id="idx-src-creator" onclick="idxUseSource('creator')">
+                        Pull from Post Creator
+                    </button>
+                    <button type="button" class="idx-source-btn" id="idx-src-injector" onclick="idxUseSource('injector')">
+                        Pull from Injector
+                    </button>
+                    <button type="button" class="idx-source-btn" id="idx-src-manual" onclick="idxUseSource('manual')">
+                        Enter Manually
+                    </button>
+                </div>
+
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="idx-filename">Filename to Register</label>
+                    <input type="text" id="idx-filename" placeholder="my-post-title.md" oninput="idxRefreshPreview()">
+                </div>
+
+                <div id="idx-pulled-info" class="idx-info-box" style="display:none;"></div>
+
+                <div class="form-group" style="margin-top: 6px;">
+                    <label for="idx-position">Insert Position</label>
+                    <select id="idx-position" onchange="idxRefreshPreview()">
+                        <option value="prepend" selected>Prepend — top of list (newest first)</option>
+                        <option value="append">Append — bottom of list (oldest first)</option>
+                    </select>
+                </div>
+
+                <div id="idx-duplicate-warn" class="idx-warn-box" style="display:none;">
+                    ⚠️ This filename already exists in the loaded index.
+                </div>
+
+                <div class="actions" style="margin-top:18px;">
+                    <button type="button" onclick="idxAddAndDownload()">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                        Download Updated index.json
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT: Preview -->
+            <div class="panel" style="display:flex; flex-direction:column;">
+                <div class="panel-title">3. Preview — Updated index.json</div>
+                <textarea class="output-textarea" id="idx-output-preview" readonly placeholder="Load an index.json and set a post filename to preview the output..."></textarea>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Toast -->
+
     <div class="toast" id="toast-notify">Copied!</div>
 
     <!-- ============================================================
@@ -971,6 +1115,7 @@
         document.getElementById('inj-author').value   = meta.author   || 'CodyMKW';
         document.getElementById('inj-category').value = meta.category || '';
         document.getElementById('inj-image').value    = meta.image    || '';
+        document.getElementById('inj-video').value    = meta.video    || '';
         document.getElementById('inj-rating').value   = meta.rating   || '';
 
         if (meta.date) {
@@ -997,6 +1142,7 @@
         const author   = document.getElementById('inj-author').value;
         const category = document.getElementById('inj-category').value;
         const image    = document.getElementById('inj-image').value;
+        const video    = document.getElementById('inj-video').value;
         const rating   = document.getElementById('inj-rating').value;
 
         let out = '---\n';
@@ -1006,6 +1152,7 @@
         out += `author: ${author}\n`;
         out += `category: ${category}\n`;
         if (image) out += `image: ${image}\n`;
+        if (video) out += `video: ${video}\n`;
         if (rating) out += `rating: ${rating}\n`;
         out += '---\n\n';
         out += injRawBody;
@@ -1049,6 +1196,156 @@
         toast.style.opacity = '1';
         setTimeout(() => { toast.style.opacity = '0'; }, 1800);
     }
+    // ========================
+    // TAB 3 — INDEX.JSON MANAGER
+    // ========================
+    let idxData = null;      // parsed { posts: [...] } object
+    let idxSource = 'creator'; // 'creator' | 'injector' | 'manual'
+
+    // Drag & drop wiring
+    const idxDrop = document.getElementById('idx-drop-zone');
+    ['dragenter','dragover'].forEach(ev => idxDrop.addEventListener(ev, e => { e.preventDefault(); idxDrop.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(ev => idxDrop.addEventListener(ev, e => { e.preventDefault(); idxDrop.classList.remove('dragover'); }));
+    idxDrop.addEventListener('drop', e => { const f = e.dataTransfer.files; if (f.length) idxProcessFile(f[0]); });
+
+    function idxHandleFileSelect(e) {
+        const f = e.target.files;
+        if (f.length) idxProcessFile(f[0]);
+        e.target.value = '';
+    }
+
+    function idxProcessFile(file) {
+        const reader = new FileReader();
+        reader.onload = evt => {
+            try {
+                const parsed = JSON.parse(evt.target.result);
+                if (!parsed.posts || !Array.isArray(parsed.posts)) {
+                    alert('Parse Error: JSON must have a "posts" array (e.g. { "posts": [...] })');
+                    return;
+                }
+                idxData = parsed;
+                document.getElementById('idx-drop-text').innerHTML = `Loaded: <code>${file.name}</code>`;
+                document.getElementById('idx-badge').innerText = 'File loaded';
+                document.getElementById('idx-badge').classList.add('active');
+                document.getElementById('idx-stat-count').innerText = idxData.posts.length;
+                idxRefreshPreview();
+            } catch (err) {
+                alert('Parse Error: Could not parse JSON — ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function idxUseSource(src) {
+        idxSource = src;
+        document.querySelectorAll('.idx-source-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('idx-src-' + src).classList.add('active');
+
+        const filenameEl = document.getElementById('idx-filename');
+        const infoEl     = document.getElementById('idx-pulled-info');
+
+        if (src === 'creator') {
+            const title = document.getElementById('c-title').value.trim();
+            if (title) {
+                const fn = slugify(title) + '.md';
+                filenameEl.value = fn;
+                infoEl.innerHTML = `<strong>From Post Creator:</strong><br>Title: ${title}<br>File: ${fn}`;
+                infoEl.style.display = 'block';
+            } else {
+                filenameEl.value = '';
+                infoEl.innerHTML = '<em>No title set in Post Creator yet.</em>';
+                infoEl.style.display = 'block';
+            }
+        } else if (src === 'injector') {
+            const title = document.getElementById('inj-title').value.trim();
+            if (title) {
+                const fn = slugify(title) + '.md';
+                filenameEl.value = fn;
+                infoEl.innerHTML = `<strong>From Injector:</strong><br>Title: ${title}<br>File: ${fn}`;
+                infoEl.style.display = 'block';
+            } else {
+                filenameEl.value = '';
+                infoEl.innerHTML = '<em>No title set in Frontmatter Injector yet.</em>';
+                infoEl.style.display = 'block';
+            }
+        } else {
+            infoEl.style.display = 'none';
+            filenameEl.value = '';
+            filenameEl.focus();
+        }
+
+        idxRefreshPreview();
+    }
+
+    function idxRefreshPreview() {
+        const filename = document.getElementById('idx-filename').value.trim();
+        const position = document.getElementById('idx-position').value;
+        const warnEl   = document.getElementById('idx-duplicate-warn');
+        const statNew  = document.getElementById('idx-stat-new');
+        const statTot  = document.getElementById('idx-stat-total');
+        const preview  = document.getElementById('idx-output-preview');
+
+        // If pulled source changed externally, re-pull the current value
+        if (idxSource === 'creator' && !filename) {
+            const t = document.getElementById('c-title').value.trim();
+            if (t) document.getElementById('idx-filename').value = slugify(t) + '.md';
+        } else if (idxSource === 'injector' && !filename) {
+            const t = document.getElementById('inj-title').value.trim();
+            if (t) document.getElementById('idx-filename').value = slugify(t) + '.md';
+        }
+
+        const fn = document.getElementById('idx-filename').value.trim();
+        statNew.innerText = fn || '—';
+
+        if (!idxData || !fn) {
+            statTot.innerText = idxData ? idxData.posts.length : '—';
+            preview.value = '';
+            warnEl.style.display = 'none';
+            return;
+        }
+
+        // Duplicate check
+        const isDuplicate = idxData.posts.includes(fn);
+        warnEl.style.display = isDuplicate ? 'block' : 'none';
+
+        // Build preview list
+        let updated = [...idxData.posts];
+        if (!isDuplicate) {
+            if (position === 'prepend') updated.unshift(fn);
+            else updated.push(fn);
+        }
+
+        statTot.innerText = updated.length;
+        preview.value = JSON.stringify({ posts: updated }, null, 2);
+    }
+
+    function idxAddAndDownload() {
+        const fn = document.getElementById('idx-filename').value.trim();
+        if (!idxData) { alert('Load an index.json file first.'); return; }
+        if (!fn)      { alert('Enter or pull a filename to register.'); return; }
+
+        const isDuplicate = idxData.posts.includes(fn);
+        if (isDuplicate) {
+            if (!confirm(`"${fn}" already exists in this index. Download anyway without adding a duplicate?`)) return;
+        }
+
+        const position = document.getElementById('idx-position').value;
+        let updated = [...idxData.posts];
+        if (!isDuplicate) {
+            if (position === 'prepend') updated.unshift(fn);
+            else updated.push(fn);
+        }
+
+        const output = JSON.stringify({ posts: updated }, null, 2);
+        const blob = new Blob([output], { type: 'application/json;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', 'index.json');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     </script>
 </body>
 </html>
