@@ -1,33 +1,39 @@
 # Static Blog Post Assistant (Studio Pro)
 
-A custom, lightweight, fully client-side Markdown editor and frontmatter generator engineered specifically for managing and creating posts for the blog section of [codymkw.nekoweb.org](https://codymkw.nekoweb.org).
+A custom, lightweight suite of fully client-side static site utilities engineered specifically for managing and generating posts for the blog section of [codymkw.nekoweb.org](https://codymkw.nekoweb.org).
 
-Hosted entirely via **GitHub Pages** for quick access from any device.
-
----
-
-## 🚀 Features
-
-* **Dual EasyMDE Instances:** Dedicated rich-text markdown panels for writing Primary Content and an optional trailing Content 2 block (ideal for breaking text around media embeds).
-* **Robust Frontmatter Parser:** Instantly load existing `.md` posts to update titles, tags, header images, ratings, or text. Fully optimized to handle both Unix (`\n`) and Windows (`\r\n`) line endings without breaking regex matchers.
-* **Real-Time Core Layout Rendering:** Live visual sandbox that displays exactly how metadata, feature images, video embeds, and Markdown styling translate into HTML layout items.
-* **Custom Review Score Engine:** Built-in calculation module that renders numeric review values (1-5) into a clean star block layout (`★` / `☆`) with automatic quality verdicts.
-* **100% Client-Side & Dark Theme Native:** Processes everything directly in the browser via native Web APIs (`FileReader`, `Blob`, `URL.createObjectURL`). Zero server dependencies, zero tracking, and designed with a dedicated dark UI to keep eye strain at a minimum.
+Hosted entirely via **GitHub Pages** for quick access and cross-device drafting.
 
 ---
 
-## 🛠️ Personalized Publishing Workflow
+## 🛠️ Included Utilities
 
-Whenever writing a new update or altering an old post, follow this simple routine:
+### 1. Post Creator Studio (`post-creator.html`)
+The primary content engine featuring live sandbox rendering and dedicated writing fields.
+* **Dual EasyMDE Instances:** Separate input tracking blocks for Primary Content and trailing Content 2 text sections.
+* **Review Score Engine:** Converts raw numeric evaluations (1-5) into structural star blocks (`★` / `☆`) on the fly.
+* **Line-Ending Protection:** Optimized frontmatter engine that handles both Unix (`\n`) and Windows (`\r\n`) file submissions perfectly.
 
-1. **Launch the Studio:** Open your deployed GitHub Pages URL.
-2. **Draft or Edit:** * To start fresh, just fill out the metadata fields and write away.
-   * To edit an older log, click **Load Existing .md Post** and choose the original file from your computer.
-3. **Download:** Click **Download .md File** to export a perfectly structured Markdown asset with clean kebab-case file naming (`your-post-title.md`).
+### 2. Universal Frontmatter Injector (`post-converter.html`)
+A slick, glassmorphic prep utility to upgrade *any* generic Markdown file, note, or external draft into a format compliant with the studio layout.
+* **Automatic Title Mapping:** Pulls text headings (`# Title`) or safely sanitizes file names to dynamically fill input attributes.
+* **Disk Signature Telemetry:** Automatically queries local operating system timestamps on file drops to isolate the last-modified date and pre-fill scheduling blocks.
+* **Document Stats Analyzer:** Real-time feedback monitor providing full counts for words, total lines, and characters.
+* **Clipboard Utility:** Features a quick one-click **Copy Snippet** button alongside traditional local file downloads.
+
+---
+
+## 🚀 The Publishing Workflow
+
+Whether you're handling a clean script, an Obsidian note, or a brand-new review draft, here is the routine:
+
+1. **Format/Inject:** If starting with a raw or external `.md` file, run it through `post-converter.html` to instantly structure the proper frontmatter tags.
+2. **Fine-Tune:** Load your structured asset into `post-creator.html` to leverage the split-pane visual layout simulator and finalize metadata values.
+3. **Download:** Click **Download** to grab a perfectly formatted kebab-case Markdown file (`your-post-title.md`).
 4. **Deploy to Nekoweb:**
-   * Drop the downloaded `.md` file directly into your server's `posts/` directory.
+   * Drop the updated `.md` file directly into your server's `posts/` directory.
    * Open your master post registry file at `posts/index.json` and prepend your new file name right into the structural list array:
-     ```json
+```json
      {
        "posts": [
          "your-new-filename.md",
@@ -38,13 +44,13 @@ Whenever writing a new update or altering an old post, follow this simple routin
 
 ---
 
-## 📦 Local Project Setup & Deployment
+## 📦 GitHub Pages Setup & Deployment
 
-Since this entire utility operates inside a single isolated HTML file, initializing it on GitHub Pages takes less than a minute:
+Because these tools run entirely on client-side Web APIs (`FileReader`, `Blob`, `URL.createObjectURL`), setting them up on your repository takes less than a minute:
 
-1. Create a new public or private GitHub repository.
-2. Commit your main interface file to the repository as `post-creator.html`.
-3. Head over to **Settings** -> **Pages** on your GitHub repository console.
-4. Set the build source parameter to **Deploy from a branch** and select your main production branch (`/root`).
-5. Save, wait a moment for the automated GitHub Pages runner to compile, and your live studio will be ready at:
-   `https://codymkw.github.io/post-creator/post-creator`
+1. Commit both `post-creator.html` and `post-converter.html` directly into the root folder of your repository.
+2. Navigate to your repository's **Settings** -> **Pages** menu on GitHub.
+3. Under Build and Deployment, set the source to **Deploy from a branch** and pick your production branch (`/root`).
+4. Save the configuration changes. After the automated runner finishes building, your production interfaces will be instantly live at:
+   * **Main Studio Editor:** `https://<your-username>.github.io/<repo-name>/post-creator.html`
+   * **Universal Metadata Injector:** `https://<your-username>.github.io/<repo-name>/post-converter.html`
