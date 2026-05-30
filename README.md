@@ -40,7 +40,7 @@ Whether you're handling a clean script, an Obsidian note, or a brand-new review 
          "older-blog-entry.md"
        ]
      }
-     ```
+```
 
 ---
 
