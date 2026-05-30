@@ -6,7 +6,7 @@ Hosted entirely via **GitHub Pages** for quick access and cross-device drafting.
 
 ## 🛠️ Included Utilities
 
-All tools are bundled into a single file — **`blog-studio.html`** — and accessible via a tab bar at the top of the page. No page reloads, no separate files to juggle.
+All tools are bundled into a single file — **`index.html`** — and accessible via a tab bar at the top of the page. No page reloads, no separate files to juggle.
 
 ### Tab 1 — Post Creator & Editor
 The primary content engine featuring live sandbox rendering and dedicated writing fields.
@@ -57,8 +57,8 @@ Whether you're handling a clean script, an Obsidian note, or a brand-new review 
 
 Because these tools run entirely on client-side Web APIs (`FileReader`, `Blob`, `URL.createObjectURL`), setting them up on your repository takes less than a minute:
 
-1. Push `blog-studio.html` to your repository.
+1. Push `index.html` to your repository.
 2. Enable **GitHub Pages** under **Settings → Pages**, pointing to your target branch.
-3. Access the suite at `https://<your-username>.github.io/<repo-name>/blog-studio.html`.
+3. Access the suite at `https://<your-username>.github.io/blog-studio`.
 
 No build step, no dependencies to install, no server required.
