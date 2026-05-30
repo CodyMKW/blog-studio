@@ -528,6 +528,83 @@
             color: #e8a840;
             margin-top: 10px;
         }
+        .idx-remove-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px;
+            background: #0d0d0d;
+        }
+
+        .idx-remove-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+
+        .idx-remove-item:hover {
+            background: #1e1e1e;
+        }
+
+        .idx-remove-item.marked {
+            background: rgba(180, 50, 50, 0.12);
+        }
+
+        .idx-remove-item input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            accent-color: #e05555;
+            cursor: pointer;
+        }
+
+        .idx-remove-item .item-name {
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.82rem;
+            color: var(--text);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .idx-remove-item.marked .item-name {
+            color: #e07070;
+            text-decoration: line-through;
+        }
+
+        .idx-remove-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .idx-remove-controls button {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .idx-remove-controls button:hover {
+            background: #1e1e1e;
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
@@ -790,12 +867,12 @@
                 </div>
 
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-val" id="idx-stat-count">0</div><div class="stat-label">Posts</div></div>
+                    <div class="stat-card"><div class="stat-val" id="idx-stat-count">0</div><div class="stat-label">Loaded</div></div>
                     <div class="stat-card"><div class="stat-val" id="idx-stat-new">—</div><div class="stat-label">Adding</div></div>
                     <div class="stat-card"><div class="stat-val" id="idx-stat-total">—</div><div class="stat-label">New Total</div></div>
                 </div>
 
-                <div class="panel-title">2. Post to Register</div>
+                <div class="panel-title">2. Add a Post</div>
 
                 <div class="idx-source-row">
                     <button type="button" class="idx-source-btn active" id="idx-src-creator" onclick="idxUseSource('creator')">
@@ -826,6 +903,23 @@
 
                 <div id="idx-duplicate-warn" class="idx-warn-box" style="display:none;">
                     ⚠️ This filename already exists in the loaded index.
+                </div>
+
+                <!-- REMOVE SECTION -->
+                <div class="panel-title" style="margin-top:22px;">
+                    <span>3. Remove Posts</span>
+                    <span id="idx-remove-count-badge" class="meta-badge" style="display:none;">0 selected</span>
+                </div>
+
+                <div id="idx-remove-empty" style="font-size:0.83rem; color:var(--text-muted); padding: 4px 0 10px;">
+                    Load an index.json above to see posts available for removal.
+                </div>
+
+                <div id="idx-remove-list" class="idx-remove-list" style="display:none;"></div>
+
+                <div id="idx-remove-controls" class="idx-remove-controls" style="display:none;">
+                    <button type="button" onclick="idxSelectAll()">Select All</button>
+                    <button type="button" onclick="idxClearAll()">Clear All</button>
                 </div>
 
                 <div class="actions" style="margin-top:18px;">
@@ -1228,12 +1322,92 @@
                 document.getElementById('idx-badge').innerText = 'File loaded';
                 document.getElementById('idx-badge').classList.add('active');
                 document.getElementById('idx-stat-count').innerText = idxData.posts.length;
+                idxBuildRemoveList();
                 idxRefreshPreview();
             } catch (err) {
                 alert('Parse Error: Could not parse JSON — ' + err.message);
             }
         };
         reader.readAsText(file);
+    }
+
+    function idxBuildRemoveList() {
+        const listEl     = document.getElementById('idx-remove-list');
+        const emptyEl    = document.getElementById('idx-remove-empty');
+        const controlsEl = document.getElementById('idx-remove-controls');
+
+        listEl.innerHTML = '';
+
+        if (!idxData || idxData.posts.length === 0) {
+            listEl.style.display = 'none';
+            controlsEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            emptyEl.innerText = 'No posts found in the loaded index.';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+        listEl.style.display = 'flex';
+        controlsEl.style.display = 'flex';
+
+        idxData.posts.forEach(fn => {
+            const item = document.createElement('label');
+            item.className = 'idx-remove-item';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = fn;
+            cb.addEventListener('change', () => {
+                item.classList.toggle('marked', cb.checked);
+                idxUpdateRemoveBadge();
+                idxRefreshPreview();
+            });
+
+            const name = document.createElement('span');
+            name.className = 'item-name';
+            name.title = fn;
+            name.innerText = fn;
+
+            item.appendChild(cb);
+            item.appendChild(name);
+            listEl.appendChild(item);
+        });
+    }
+
+    function idxUpdateRemoveBadge() {
+        const checked = document.querySelectorAll('#idx-remove-list input[type="checkbox"]:checked');
+        const badge = document.getElementById('idx-remove-count-badge');
+        if (checked.length > 0) {
+            badge.innerText = `${checked.length} marked for removal`;
+            badge.style.display = 'inline';
+            badge.classList.add('active');
+        } else {
+            badge.style.display = 'none';
+            badge.classList.remove('active');
+        }
+    }
+
+    function idxSelectAll() {
+        document.querySelectorAll('#idx-remove-list input[type="checkbox"]').forEach(cb => {
+            cb.checked = true;
+            cb.closest('.idx-remove-item').classList.add('marked');
+        });
+        idxUpdateRemoveBadge();
+        idxRefreshPreview();
+    }
+
+    function idxClearAll() {
+        document.querySelectorAll('#idx-remove-list input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.idx-remove-item').classList.remove('marked');
+        });
+        idxUpdateRemoveBadge();
+        idxRefreshPreview();
+    }
+
+    function idxGetRemovals() {
+        return Array.from(document.querySelectorAll('#idx-remove-list input[type="checkbox"]:checked'))
+            .map(cb => cb.value);
     }
 
     function idxUseSource(src) {
@@ -1294,23 +1468,27 @@
             if (t) document.getElementById('idx-filename').value = slugify(t) + '.md';
         }
 
-        const fn = document.getElementById('idx-filename').value.trim();
+        const fn       = document.getElementById('idx-filename').value.trim();
+        const removals = idxGetRemovals();
+
         statNew.innerText = fn || '—';
 
-        if (!idxData || !fn) {
-            statTot.innerText = idxData ? idxData.posts.length : '—';
+        if (!idxData) {
+            statTot.innerText = '—';
             preview.value = '';
             warnEl.style.display = 'none';
             return;
         }
 
-        // Duplicate check
-        const isDuplicate = idxData.posts.includes(fn);
+        // Start with current list minus any removals
+        let updated = idxData.posts.filter(p => !removals.includes(p));
+
+        // Duplicate check against post-removal list
+        const isDuplicate = fn ? updated.includes(fn) : false;
         warnEl.style.display = isDuplicate ? 'block' : 'none';
 
-        // Build preview list
-        let updated = [...idxData.posts];
-        if (!isDuplicate) {
+        // Add new entry if provided and not a dupe
+        if (fn && !isDuplicate) {
             if (position === 'prepend') updated.unshift(fn);
             else updated.push(fn);
         }
@@ -1320,20 +1498,34 @@
     }
 
     function idxAddAndDownload() {
-        const fn = document.getElementById('idx-filename').value.trim();
         if (!idxData) { alert('Load an index.json file first.'); return; }
-        if (!fn)      { alert('Enter or pull a filename to register.'); return; }
 
-        const isDuplicate = idxData.posts.includes(fn);
-        if (isDuplicate) {
-            if (!confirm(`"${fn}" already exists in this index. Download anyway without adding a duplicate?`)) return;
+        const fn       = document.getElementById('idx-filename').value.trim();
+        const position = document.getElementById('idx-position').value;
+        const removals = idxGetRemovals();
+
+        // Start with current list minus removals
+        let updated = idxData.posts.filter(p => !removals.includes(p));
+
+        // Handle add
+        if (fn) {
+            const isDuplicate = updated.includes(fn);
+            if (isDuplicate) {
+                if (!confirm(`"${fn}" already exists in this index. Download anyway without adding a duplicate?`)) return;
+            } else {
+                if (position === 'prepend') updated.unshift(fn);
+                else updated.push(fn);
+            }
         }
 
-        const position = document.getElementById('idx-position').value;
-        let updated = [...idxData.posts];
-        if (!isDuplicate) {
-            if (position === 'prepend') updated.unshift(fn);
-            else updated.push(fn);
+        // Confirm removals if any
+        if (removals.length > 0) {
+            if (!confirm(`This will permanently remove ${removals.length} post${removals.length > 1 ? 's' : ''} from the index:\n\n${removals.join('\n')}\n\nContinue?`)) return;
+        }
+
+        if (!fn && removals.length === 0) {
+            alert('Nothing to do — enter a filename to add, or check posts to remove.');
+            return;
         }
 
         const output = JSON.stringify({ posts: updated }, null, 2);
