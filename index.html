@@ -609,9 +609,6 @@
 </head>
 <body>
 
-    <!-- ============================================================
-         SUITE HEADER + TAB SWITCHER
-    ============================================================ -->
     <div class="suite-header">
         <div class="suite-brand">
             <div class="logo-mark">
@@ -620,7 +617,7 @@
                 </svg>
             </div>
             <h1>Blog Studio Suite</h1>
-            <span class="version-tag">v3.2</span>
+            <span class="version-tag">v3.3</span>
         </div>
 
         <nav class="tab-bar">
@@ -639,13 +636,8 @@
         </nav>
     </div>
 
-    <!-- ============================================================
-         TAB 1: BLOG POST CREATOR
-    ============================================================ -->
     <div id="tab-creator" class="tab-panel active">
         <div class="panel-grid panel-grid-2col">
-
-            <!-- LEFT: Controls -->
             <div class="panel">
                 <div class="panel-title">Metadata / Frontmatter</div>
 
@@ -717,7 +709,6 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Preview -->
             <div style="position: sticky; top: 62px; align-self: start;">
                 <div class="panel">
                     <div class="panel-title">Live Preview</div>
@@ -753,17 +744,11 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- ============================================================
-         TAB 2: FRONTMATTER INJECTOR
-    ============================================================ -->
     <div id="tab-injector" class="tab-panel">
         <div class="panel-grid panel-grid-2col">
-
-            <!-- LEFT: Controls -->
             <div class="panel">
                 <div class="panel-title">
                     <span>1. Upload Source Document</span>
@@ -831,7 +816,6 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Output -->
             <div class="panel" style="display: flex; flex-direction: column;">
                 <div class="panel-title">3. Studio-Ready Output</div>
                 <textarea class="output-textarea" id="inj-output-preview" readonly placeholder="Your standardized Markdown output will appear here..."></textarea>
@@ -843,17 +827,11 @@
                     <button type="button" class="btn-alt" onclick="injCopy()">Copy Snippet</button>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- ============================================================
-         TAB 3: INDEX.JSON MANAGER
-    ============================================================ -->
     <div id="tab-slugtool" class="tab-panel">
         <div class="panel-grid panel-grid-2col">
-
-            <!-- LEFT: Upload + controls -->
             <div class="panel">
                 <div class="panel-title">
                     <span>1. Load index.json</span>
@@ -875,15 +853,9 @@
                 <div class="panel-title">2. Add a Post</div>
 
                 <div class="idx-source-row">
-                    <button type="button" class="idx-source-btn active" id="idx-src-creator" onclick="idxUseSource('creator')">
-                        Pull from Post Creator
-                    </button>
-                    <button type="button" class="idx-source-btn" id="idx-src-injector" onclick="idxUseSource('injector')">
-                        Pull from Injector
-                    </button>
-                    <button type="button" class="idx-source-btn" id="idx-src-manual" onclick="idxUseSource('manual')">
-                        Enter Manually
-                    </button>
+                    <button type="button" class="idx-source-btn active" id="idx-src-creator" onclick="idxUseSource('creator')">Pull from Post Creator</button>
+                    <button type="button" class="idx-source-btn" id="idx-src-injector" onclick="idxUseSource('injector')">Pull from Injector</button>
+                    <button type="button" class="idx-source-btn" id="idx-src-manual" onclick="idxUseSource('manual')">Enter Manually</button>
                 </div>
 
                 <div class="form-group" style="margin-top:14px;">
@@ -905,7 +877,6 @@
                     ⚠️ This filename already exists in the loaded index.
                 </div>
 
-                <!-- REMOVE SECTION -->
                 <div class="panel-title" style="margin-top:22px;">
                     <span>3. Remove Posts</span>
                     <span id="idx-remove-count-badge" class="meta-badge" style="display:none;">0 selected</span>
@@ -930,22 +901,15 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Preview -->
             <div class="panel" style="display:flex; flex-direction:column;">
                 <div class="panel-title">3. Preview — Updated index.json</div>
                 <textarea class="output-textarea" id="idx-output-preview" readonly placeholder="Load an index.json and set a post filename to preview the output..."></textarea>
             </div>
-
         </div>
     </div>
 
-    <!-- Toast -->
-
     <div class="toast" id="toast-notify">Copied!</div>
 
-    <!-- ============================================================
-         SCRIPTS
-    ============================================================ -->
     <script>
     // ========================
     // TAB SWITCHING
@@ -955,8 +919,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + tabId).classList.add('active');
         btn.classList.add('active');
-
-        // Refresh EasyMDE instances on tab show (avoids CodeMirror sizing bugs)
         if (tabId === 'creator') {
             if (window.easyMDE) window.easyMDE.codemirror.refresh();
             if (window.easyMDE2) window.easyMDE2.codemirror.refresh();
@@ -1080,20 +1042,14 @@
             const body   = parts.slice(2).join('---\n').trim();
             const lines  = fmText.split(/\r?\n/);
             let meta = {};
-            let parsingC2 = false, c2Lines = [];
 
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                if (parsingC2) {
-                    if (line.startsWith('  ') || line.trim() === '') { c2Lines.push(line.substring(2)); continue; }
-                    else parsingC2 = false;
-                }
-                if (line.trim().startsWith('content2:')) { parsingC2 = true; continue; }
-                const m = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+                const m = lines[i].match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
                 if (m) meta[m[1]] = m[2].trim();
             }
 
-            const c2 = c2Lines.join('\n').trim();
+            // Decode \n escape sequences in content2 back to real newlines
+            const c2 = meta.content2 ? meta.content2.replace(/\\n/g, '\n') : '';
 
             document.getElementById('c-title').value    = meta.title    || '';
             document.getElementById('c-author').value   = meta.author   || 'CodyMKW';
@@ -1142,10 +1098,11 @@
         md += `time: ${time}\n`;
         md += `author: ${author}\n`;
         md += `category: ${category}\n`;
-        if (image) md += `image: ${image}\n`;
-        if (video) md += `video: ${video}\n`;
-        if (rating) md += `rating: ${rating}\n`;
-        if (content2) { md += `content2: |\n`; md += content2.split('\n').map(l => '  ' + l).join('\n') + '\n'; }
+        if (image)    md += `image: ${image}\n`;
+        if (video)    md += `video: ${video}\n`;
+        if (rating)   md += `rating: ${rating}\n`;
+        // Store content2 as a single line with \n escape sequences
+        if (content2) md += `content2: ${content2.replace(/\n/g, '\\n')}\n`;
         md += '---\n\n';
         md += content;
 
@@ -1290,13 +1247,13 @@
         toast.style.opacity = '1';
         setTimeout(() => { toast.style.opacity = '0'; }, 1800);
     }
+
     // ========================
     // TAB 3 — INDEX.JSON MANAGER
     // ========================
-    let idxData = null;      // parsed { posts: [...] } object
-    let idxSource = 'creator'; // 'creator' | 'injector' | 'manual'
+    let idxData = null;
+    let idxSource = 'creator';
 
-    // Drag & drop wiring
     const idxDrop = document.getElementById('idx-drop-zone');
     ['dragenter','dragover'].forEach(ev => idxDrop.addEventListener(ev, e => { e.preventDefault(); idxDrop.classList.add('dragover'); }));
     ['dragleave','drop'].forEach(ev => idxDrop.addEventListener(ev, e => { e.preventDefault(); idxDrop.classList.remove('dragover'); }));
@@ -1459,7 +1416,6 @@
         const statTot  = document.getElementById('idx-stat-total');
         const preview  = document.getElementById('idx-output-preview');
 
-        // If pulled source changed externally, re-pull the current value
         if (idxSource === 'creator' && !filename) {
             const t = document.getElementById('c-title').value.trim();
             if (t) document.getElementById('idx-filename').value = slugify(t) + '.md';
@@ -1480,14 +1436,10 @@
             return;
         }
 
-        // Start with current list minus any removals
         let updated = idxData.posts.filter(p => !removals.includes(p));
-
-        // Duplicate check against post-removal list
         const isDuplicate = fn ? updated.includes(fn) : false;
         warnEl.style.display = isDuplicate ? 'block' : 'none';
 
-        // Add new entry if provided and not a dupe
         if (fn && !isDuplicate) {
             if (position === 'prepend') updated.unshift(fn);
             else updated.push(fn);
@@ -1504,10 +1456,8 @@
         const position = document.getElementById('idx-position').value;
         const removals = idxGetRemovals();
 
-        // Start with current list minus removals
         let updated = idxData.posts.filter(p => !removals.includes(p));
 
-        // Handle add
         if (fn) {
             const isDuplicate = updated.includes(fn);
             if (isDuplicate) {
@@ -1518,7 +1468,6 @@
             }
         }
 
-        // Confirm removals if any
         if (removals.length > 0) {
             if (!confirm(`This will permanently remove ${removals.length} post${removals.length > 1 ? 's' : ''} from the index:\n\n${removals.join('\n')}\n\nContinue?`)) return;
         }
@@ -1537,7 +1486,6 @@
         link.click();
         document.body.removeChild(link);
     }
-
     </script>
 </body>
 </html>
