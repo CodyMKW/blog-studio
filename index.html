@@ -882,9 +882,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="idx-post-id">Post ID (Optional — leave blank to auto-number)</label>
-                    <input type="number" id="idx-post-id" placeholder="e.g. 46" min="1" oninput="idxRefreshPreview()">
-                    <div class="id-hint">If set, outputs <code>{ "file": "...", "id": N }</code>. If blank, outputs a plain string.</div>
+                    <label for="idx-post-id">Post ID (Auto-filled with next available ID — edit or clear to override)</label>
+                    <input type="number" id="idx-post-id" placeholder="e.g. 46" min="1" oninput="idxPostIdEdited()">
+                    <div class="id-hint">Auto-numbered to the next available ID. Edit to set a custom ID, or clear it to register a plain filename string instead.</div>
                 </div>
 
                 <div id="idx-pulled-info" class="idx-info-box" style="display:none;"></div>
@@ -892,8 +892,8 @@
                 <div class="form-group" style="margin-top: 6px;">
                     <label for="idx-position">Insert Position</label>
                     <select id="idx-position" onchange="idxRefreshPreview()">
-                        <option value="prepend" selected>Prepend — top of list (newest first)</option>
-                        <option value="append">Append — bottom of list (oldest first)</option>
+                        <option value="prepend">Prepend — top of list (newest first)</option>
+                        <option value="append" selected>Append — bottom of list (oldest first)</option>
                     </select>
                 </div>
 
@@ -1279,6 +1279,7 @@
     // ========================
     let idxData = null;   // raw parsed JSON, posts array may be strings OR { file, id } objects
     let idxSource = 'creator';
+    let idxIdUserEdited = false; // true once the user manually types/clears the Post ID field
 
     // Normalise a posts array entry to { file, id } — id may be null for plain strings
     function idxNormalise(entry) {
@@ -1291,6 +1292,27 @@
     // Return the filename string from a normalised or raw entry
     function idxFile(entry) {
         return typeof entry === 'object' && entry !== null ? entry.file : entry;
+    }
+
+    // Work out the next available Post ID, treating entries without an explicit
+    // "id" as implicitly numbered by their position in the array (1-indexed) —
+    // matches the same convention used for the auto-number badges in the
+    // removal list.
+    function idxComputeNextId(posts) {
+        let maxId = 0;
+        posts.forEach((entry, i) => {
+            const norm = idxNormalise(entry);
+            const effectiveId = norm.id != null ? norm.id : (i + 1);
+            if (effectiveId > maxId) maxId = effectiveId;
+        });
+        return maxId + 1;
+    }
+
+    // Called on user input in the Post ID field — once the user touches it,
+    // stop auto-filling so their value (including an intentionally blank one) sticks.
+    function idxPostIdEdited() {
+        idxIdUserEdited = true;
+        idxRefreshPreview();
     }
 
     const idxDrop = document.getElementById('idx-drop-zone');
@@ -1314,6 +1336,7 @@
                     return;
                 }
                 idxData = parsed;
+                idxIdUserEdited = false; // fresh file load — go back to auto-suggesting the next ID
                 document.getElementById('idx-drop-text').innerHTML = `Loaded: <code>${file.name}</code>`;
                 document.getElementById('idx-badge').innerText = 'File loaded';
                 document.getElementById('idx-badge').classList.add('active');
@@ -1492,7 +1515,6 @@
         }
 
         const fn       = document.getElementById('idx-filename').value.trim();
-        const idVal    = document.getElementById('idx-post-id').value.trim();
         const removals = idxGetRemovals();
 
         statNew.innerText = fn || '—';
@@ -1507,6 +1529,13 @@
 
         // Filter out removals, keep original entry shape
         let updated = idxData.posts.filter(p => !removals.includes(idxFile(p)));
+
+        // Auto-suggest the next available Post ID unless the user has edited the field themselves
+        const idInput = document.getElementById('idx-post-id');
+        if (!idxIdUserEdited) {
+            idInput.value = idxComputeNextId(updated);
+        }
+        const idVal = idInput.value.trim();
 
         // Check for duplicate filename
         const isDuplicate = fn ? updated.some(p => idxFile(p) === fn) : false;
